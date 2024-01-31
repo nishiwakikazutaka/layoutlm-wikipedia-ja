@@ -2,6 +2,37 @@
 
 This is a [LayoutLM](https://doi.org/10.1145/3394486.3403172) model pretrained on texts in the Japanese language.
 
+## Update: The model is available on Hugging Face now
+
+Our pre-trained model is now also available on [🤗 Hugging Face](https://huggingface.co/jri-advtechlab/layoutlm-wikipedia-ja). You can use the following code to quickly start with our model:
+
+```python
+>>> from transformers import AutoTokenizer, AutoModel
+>>> import torch
+
+>>> tokenizer = AutoTokenizer.from_pretrained("jri-advtechlab/layoutlm-wikipedia-ja")
+>>> model = AutoModel.from_pretrained("jri-advtechlab/layoutlm-wikipedia-ja")
+
+>>> tokens = tokenizer.tokenize("こんにちは")  # ['こん', '##にち', '##は']
+>>> normalized_token_boxes = [[637, 773, 693, 782], [693, 773, 749, 782], [749, 773, 775, 782]]
+>>> # add bounding boxes of cls + sep tokens
+>>> bbox = [[0, 0, 0, 0]] + normalized_token_boxes + [[1000, 1000, 1000, 1000]]
+
+>>> input_ids = [tokenizer.cls_token_id] \
+                + tokenizer.convert_tokens_to_ids(tokens) \
+                + [tokenizer.sep_token_id]
+>>> attention_mask = [1] * len(input_ids)
+>>> token_type_ids = [0] * len(input_ids)
+>>> encoding = {
+    "input_ids": torch.tensor([input_ids]),
+    "attention_mask": torch.tensor([attention_mask]),
+    "token_type_ids": torch.tensor([token_type_ids]),
+    "bbox": torch.tensor([bbox]),
+    }
+
+>>> outputs = model(**encoding)
+```
+
 ## Model Details
 
 ### Model Description
@@ -59,7 +90,7 @@ We used the tokenizer of [cl-tohoku/bert-base-japanese-v2](https://huggingface.c
 
 The vocabulary is the same as [cl-tohoku/bert-base-japanese-v2](https://huggingface.co/cl-tohoku/bert-base-japanese-v2).
 
-### Training Procedure 
+### Training Procedure
 
 The model was trained using Masked Visual-Language Model (MVLM), but it was not trained using Multi-label Document Classification (MDC). We made this decision because we did not identify significant visual differences, such as those between a contract and an invoice, between the different Wikipedia articles.
 
